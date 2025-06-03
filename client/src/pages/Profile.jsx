@@ -11,7 +11,7 @@ const ProfilePage = () => {
 
     axios
       .get(
-        'http://localhost:5000/auth/career-details',
+        'http://54.255.153.51:5000/auth/career-details',
         {
           headers: {
             Authorization: `Bearer ${token}`,

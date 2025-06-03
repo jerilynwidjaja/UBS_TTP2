@@ -30,7 +30,7 @@ const UserPreferencesModal = ({ isOpen, onRequestClose }) => {
         level,
       };
       await axios.post(
-        'http://localhost:5000/auth/career-details',
+        'http://54.255.153.51:5000/auth/career-details',
         preferences,
         {
           headers: {
