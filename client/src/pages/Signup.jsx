@@ -16,7 +16,7 @@ function Signup() {
 
     try {
       const response = await fetch(
-        'http://13.229.46.111:5000/auth/signup',
+        'http://13.229.96.169:5000/auth/signup',
         {
           method: 'POST',
           headers: {

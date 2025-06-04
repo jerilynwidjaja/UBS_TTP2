@@ -6,7 +6,7 @@ const CourseList = () => {
   const [courses, setCourses] = useState([]);
 
   useEffect(() => {
-    axios.get('http://13.229.46.111:5000/courses').then(res => setCourses(res.data));
+    axios.get('http://13.229.96.169:5000/courses').then(res => setCourses(res.data));
   }, []);
 
   return (
