@@ -10,7 +10,7 @@ const QuestionPage = () => {
   const [output, setOutput] = useState('');
 
   useEffect(() => {
-    axios.get(`http://54.255.153.51:5000/questions/${questionId}`).then(res => {
+    axios.get(`http://13.229.46.111:5000/questions/${questionId}`).then(res => {
       setQuestion(res.data);
       setCode(res.data.starter_code);
     });
@@ -18,7 +18,7 @@ const QuestionPage = () => {
 
   const handleRun = async () => {
     try {
-      const res = await axios.post('http://54.255.153.51:5000/code/run', {
+      const res = await axios.post('http://13.229.46.111:5000/code/run', {
         source_code: code,
         language_id: question.language_id,
         stdin: '',

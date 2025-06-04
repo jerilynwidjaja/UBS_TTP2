@@ -12,7 +12,7 @@ function Login() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        'http://54.255.153.51:5000/auth/login',
+        'http://13.229.46.111:5000/auth/login',
         {
           email,
           password,
