@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const { Question } = require('../models');
 
 router.post('/run', async (req, res) => {
   const { source_code, language_id, stdin } = req.body;
   console.log('Received body:', req.body);
+  console.log(Question);
 
   try {
     const response = await axios.post(
