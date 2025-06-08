@@ -24,7 +24,7 @@ const QuestionPage = () => {
         stdin: '',
         questionId
       });
-      setOutput(res.data.output);
+      setOutput(res.data.result);
     } catch (err) {
       console.error(err);
       setOutput('Error running code');
