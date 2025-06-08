@@ -8,6 +8,8 @@ const { source_code, language_id, stdin, questionId } = req.body;
 console.log('Received body:', req.body);
 
 try {
+  const allQuestions = await Question.findAll();
+console.log(allQuestions);
 const question = await Question.findByPk(questionId);
 if (!question) return res.status(404).json({ error: 'Question not found' });
 
