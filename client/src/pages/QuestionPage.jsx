@@ -22,7 +22,7 @@ const QuestionPage = () => {
         source_code: code,
         language_id: question.language_id,
         stdin: '',
-        questionId
+        questionId: question.id
       });
       setOutput(res.data.result);
     } catch (err) {
