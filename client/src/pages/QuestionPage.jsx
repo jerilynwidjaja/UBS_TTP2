@@ -18,6 +18,7 @@ const QuestionPage = () => {
 
   const handleRun = async () => {
     try {
+      console.log(question);
       const res = await axios.post('http://13.229.96.169:5000/code/run', {
         source_code: code,
         language_id: question.language_id,
