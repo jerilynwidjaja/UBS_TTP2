@@ -1,27 +1,30 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize(
-  'mydb',        
-  'postgres',    
-  'postgres',     
-  {
-    host: 'db',   
-    port: 5432,
-    dialect: 'postgres',
-    logging: false, 
-  }
-);
+import { Sequelize } from 'sequelize';
+import UserModel from './User.js';
+import CourseModel from './Course.js';
+import QuestionModel from './Question.js';
+import UserProgressModel from './UserProgress.js';
 
-sequelize.sync();
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: './database.sqlite',
+  logging: false
+});
 
-const db = {};
-db.Sequelize = Sequelize;
-db.sequelize = sequelize;
+const User = UserModel(sequelize, Sequelize.DataTypes);
+const Course = CourseModel(sequelize, Sequelize.DataTypes);
+const Question = QuestionModel(sequelize, Sequelize.DataTypes);
+const UserProgress = UserProgressModel(sequelize, Sequelize.DataTypes);
 
-db.Course = require('./Course')(sequelize, DataTypes);
-db.Question = require('./Question')(sequelize, DataTypes);
-db.User = require('./User')(sequelize, DataTypes);
+Course.hasMany(Question, { foreignKey: 'courseId', as: 'questions' });
+Question.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 
-db.Course.hasMany(db.Question, { foreignKey: 'courseId' });
-db.Question.belongsTo(db.Course, { foreignKey: 'courseId' });
+User.hasMany(UserProgress, { foreignKey: 'userId', as: 'progress' });
+UserProgress.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-module.exports = db;
+Course.hasMany(UserProgress, { foreignKey: 'courseId', as: 'userProgress' });
+UserProgress.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+
+Question.hasMany(UserProgress, { foreignKey: 'questionId', as: 'userProgress' });
+UserProgress.belongsTo(Question, { foreignKey: 'questionId', as: 'question' });
+
+export { sequelize, User, Course, Question, UserProgress };
