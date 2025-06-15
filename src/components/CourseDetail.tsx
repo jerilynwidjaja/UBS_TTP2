@@ -49,7 +49,7 @@ const CourseDetail: React.FC = () => {
 
   const fetchCourse = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/courses/${id}`);
+      const response = await axios.get(`http://52.221.205.14:8000/api/courses/${id}`);
       setCourse(response.data.course);
     } catch (error) {
       toast.error('Failed to load course');

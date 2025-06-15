@@ -38,7 +38,7 @@ const QuestionView: React.FC = () => {
 
   const fetchQuestion = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/questions/${id}`);
+      const response = await axios.get(`http://52.221.205.14:8000/api/questions/${id}`);
       const questionData = response.data.question;
       setQuestion(questionData);
       setCode(questionData.starterCode || '');
@@ -61,7 +61,7 @@ const QuestionView: React.FC = () => {
     setResult(null);
     
     try {
-      const response = await axios.post(`http://localhost:8000/api/questions/${question.id}/submit`, {
+      const response = await axios.post(`http://52.221.205.14:8000/api/questions/${question.id}/submit`, {
         code
       });
       

@@ -34,7 +34,7 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:8000/api/auth/preferences', formData);
+      await axios.post('http://52.221.205.14:8000/api/auth/preferences', formData);
       updateUser({ hasPreferences: true });
       toast.success('Preferences saved successfully!');
       onClose();
