@@ -38,7 +38,7 @@ export class AIRecommendationService {
         messages: [
           {
             role: "system",
-            content: "You are an expert educational AI. Analyze user learning profiles and provide balanced, grounded, and personalized course recommendations. Never give a score of 100. Always respond in valid JSON."
+            content: "You are an expert educational AI. Analyze user learning profiles and provide balanced, grounded, and personalized course recommendations. Always respond in valid JSON."
           },
           {
             role: "user",
