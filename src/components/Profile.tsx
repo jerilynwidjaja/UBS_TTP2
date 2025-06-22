@@ -63,8 +63,8 @@ const Profile: React.FC = () => {
   const fetchCourses = async () => {
     try {
       const [coursesResponse, recommendedResponse] = await Promise.all([
-        axios.get('http://localhost:5000/api/courses'),
-        axios.get('http://localhost:5000/api/courses/recommended')
+        axios.get('http://52.221.205.14:8000/api/courses'),
+        axios.get('http://52.221.205.14:8000/api/courses/recommended')
       ]);
       
       setCourses(coursesResponse.data.courses);
