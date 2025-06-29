@@ -108,10 +108,10 @@ const ProgressDashboard: React.FC = () => {
   const fetchProgressData = async () => {
     try {
       const [feedbackRes, pathRes, sequentialRes, analyticsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/progress/feedback'),
-        axios.get('http://localhost:5000/api/progress/learning-path'),
-        axios.get('http://localhost:5000/api/progress/sequential-path'),
-        axios.get('http://localhost:5000/api/progress/analytics')
+        axios.get('http://52.221.205.14:8000/api/progress/feedback'),
+        axios.get('http://52.221.205.14:8000/api/progress/learning-path'),
+        axios.get('http://52.221.205.14:8000/api/progress/sequential-path'),
+        axios.get('http://52.221.205.14:8000/api/progress/analytics')
       ]);
 
       setFeedback(feedbackRes.data.feedback);
