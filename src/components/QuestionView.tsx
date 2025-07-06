@@ -2,53 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, CheckCircle2, XCircle, AlertCircle, Code } from 'lucide-react';
 import Editor from '@monaco-editor/react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
-
-interface Question {
-  id: number;
-  title: string;
-  description: string;
-  starterCode: string;
-  languageId: number;
-  expectedOutput: string;
-  difficulty: string;
-  courseId: number;
-}
-
-interface ExecutionResult {
-  passed: boolean;
-  output: string;
-  error: string | null;
-  status: string;
-}
-
-interface LanguageConfig {
-  name: string;
-  monaco: string;
-  extension: string;
-}
-
-const LANGUAGE_CONFIG: Record<number, LanguageConfig> = {
-  63: { name: 'JavaScript', monaco: 'javascript', extension: 'js' },
-  71: { name: 'Python', monaco: 'python', extension: 'py' },
-  62: { name: 'Java', monaco: 'java', extension: 'java' },
-  54: { name: 'C++', monaco: 'cpp', extension: 'cpp' },
-  50: { name: 'C', monaco: 'c', extension: 'c' },
-  51: { name: 'C#', monaco: 'csharp', extension: 'cs' },
-  78: { name: 'Kotlin', monaco: 'kotlin', extension: 'kt' },
-  72: { name: 'Ruby', monaco: 'ruby', extension: 'rb' },
-  73: { name: 'Rust', monaco: 'rust', extension: 'rs' },
-  68: { name: 'PHP', monaco: 'php', extension: 'php' },
-  60: { name: 'Go', monaco: 'go', extension: 'go' },
-  74: { name: 'TypeScript', monaco: 'typescript', extension: 'ts' },
-  82: { name: 'SQL', monaco: 'sql', extension: 'sql' },
-  75: { name: 'Swift', monaco: 'swift', extension: 'swift' }
-};
+import { useTheme } from '../contexts/ThemeContext';
+import { QuestionService, Question, ExecutionResult } from '../services/questionService';
 
 const QuestionView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [question, setQuestion] = useState<Question | null>(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
@@ -56,13 +17,16 @@ const QuestionView: React.FC = () => {
   const [result, setResult] = useState<ExecutionResult | null>(null);
 
   useEffect(() => {
-    fetchQuestion();
+    if (id) {
+      fetchQuestion();
+    }
   }, [id]);
 
   const fetchQuestion = async () => {
+    if (!id) return;
+    
     try {
-      const response = await axios.get(`http://52.221.205.14:8000/api/questions/${id}`);
-      const questionData = response.data.question;
+      const questionData = await QuestionService.getQuestionById(id);
       setQuestion(questionData);
       setCode(questionData.starterCode || '');
     } catch (error) {
@@ -84,13 +48,10 @@ const QuestionView: React.FC = () => {
     setResult(null);
     
     try {
-      const response = await axios.post(`http://52.221.205.14:8000/api/questions/${question.id}/submit`, {
-        code
-      });
+      const executionResult = await QuestionService.submitCode(question.id, code);
+      setResult(executionResult);
       
-      setResult(response.data);
-      
-      if (response.data.passed) {
+      if (executionResult.passed) {
         toast.success('Congratulations! Your solution is correct! 🎉');
       } else {
         toast.error('Your solution needs some work. Keep trying!');
@@ -108,29 +69,12 @@ const QuestionView: React.FC = () => {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'hard':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getLanguageConfig = (languageId: number): LanguageConfig => {
-    return LANGUAGE_CONFIG[languageId] || LANGUAGE_CONFIG[63];
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading question...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading question...</p>
         </div>
       </div>
     );
@@ -138,12 +82,12 @@ const QuestionView: React.FC = () => {
 
   if (!question) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Question not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Question not found</h2>
           <button
             onClick={() => navigate('/profile')}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             Return to dashboard
           </button>
@@ -152,26 +96,26 @@ const QuestionView: React.FC = () => {
     );
   }
 
-  const languageConfig = getLanguageConfig(question.languageId);
+  const languageConfig = QuestionService.getLanguageConfig(question.languageId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
                 onClick={() => navigate(`/course/${question.courseId}`)}
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-4"
+                className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
                 Back to Course
               </button>
               
               <div className="flex items-center">
-                <Code className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-gray-700">
+                <Code className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {languageConfig.name}
                 </span>
               </div>
@@ -196,16 +140,16 @@ const QuestionView: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-140px)]">
           {/* Question Panel */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900">{question.title}</h1>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getDifficultyColor(question.difficulty)}`}>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{question.title}</h1>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${QuestionService.getDifficultyColor(question.difficulty)}`}>
                   {question.difficulty}
                 </span>
               </div>
               
-              <div className="flex items-center text-sm text-gray-600 mb-4">
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-4">
                 <Code className="h-4 w-4 mr-1" />
                 <span>{languageConfig.name}</span>
               </div>
@@ -213,17 +157,17 @@ const QuestionView: React.FC = () => {
             
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="prose max-w-none">
-                <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {question.description}
                 </div>
                 
                 {question.expectedOutput && (
-                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2 flex items-center">
                       <CheckCircle2 className="h-4 w-4 mr-1" />
                       Expected Output:
                     </h3>
-                    <code className="text-blue-800 bg-blue-100 px-2 py-1 rounded text-sm">
+                    <code className="text-blue-800 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded text-sm">
                       {question.expectedOutput}
                     </code>
                   </div>
@@ -233,14 +177,14 @@ const QuestionView: React.FC = () => {
           </div>
 
           {/* Code Editor Panel */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <Code className="h-5 w-5 mr-2 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                  <Code className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
                   Code Editor
                 </h2>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   {languageConfig.name} (.{languageConfig.extension})
                 </div>
               </div>
@@ -252,7 +196,7 @@ const QuestionView: React.FC = () => {
                 language={languageConfig.monaco}
                 value={code}
                 onChange={handleCodeChange}
-                theme="vs-light"
+                theme={isDarkMode ? "vs-dark" : "vs-light"}
                 options={{
                   minimap: { enabled: false },
                   fontSize: 14,
@@ -277,7 +221,7 @@ const QuestionView: React.FC = () => {
             
             {/* Results Panel */}
             {result && (
-              <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700">
                 <div className="flex items-center mb-3">
                   {result.passed ? (
                     <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
@@ -287,18 +231,18 @@ const QuestionView: React.FC = () => {
                   <h3 className={`font-semibold ${result.passed ? 'text-green-600' : 'text-red-600'}`}>
                     {result.passed ? 'Success! ✨' : 'Failed ❌'}
                   </h3>
-                  <span className="ml-auto text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
                     {result.status}
                   </span>
                 </div>
                 
                 {result.output && (
                   <div className="mb-3">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Code className="h-4 w-4 mr-1" />
                       Output:
                     </h4>
-                    <pre className="bg-gray-100 border border-gray-200 p-3 rounded-lg text-sm overflow-x-auto font-mono">
+                    <pre className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-3 rounded-lg text-sm overflow-x-auto font-mono">
                       {result.output}
                     </pre>
                   </div>
@@ -306,11 +250,11 @@ const QuestionView: React.FC = () => {
                 
                 {result.error && (
                   <div className="mb-3">
-                    <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center">
+                    <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-2 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       Error:
                     </h4>
-                    <pre className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm overflow-x-auto font-mono">
+                    <pre className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-400 p-3 rounded-lg text-sm overflow-x-auto font-mono">
                       {result.error}
                     </pre>
                   </div>

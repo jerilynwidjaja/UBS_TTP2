@@ -15,6 +15,7 @@ const Course = CourseModel(sequelize, Sequelize.DataTypes);
 const Question = QuestionModel(sequelize, Sequelize.DataTypes);
 const UserProgress = UserProgressModel(sequelize, Sequelize.DataTypes);
 
+// Define associations
 Course.hasMany(Question, { foreignKey: 'courseId', as: 'questions' });
 Question.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 

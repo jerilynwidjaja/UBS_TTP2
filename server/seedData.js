@@ -55,9 +55,8 @@ const seedDatabase = async () => {
       }
     ]);
 
-    // Create comprehensive questions with verifiable outputs
     await Question.bulkCreate([
-      // JavaScript Fundamentals (Beginner)
+
       {
         title: 'Hello World Function',
         description: 'Create a function that returns the string "Hello, World!"',
@@ -99,7 +98,6 @@ const seedDatabase = async () => {
         testCases: [{ input: '"hello"', expected: 'olleh' }]
       },
 
-      // Python Programming Basics (Beginner)
       {
         title: 'Python Hello World',
         description: 'Print "Hello, Python!" to the console',
@@ -131,7 +129,6 @@ const seedDatabase = async () => {
         testCases: [{ input: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]', expected: '[2, 4, 6, 8, 10]' }]
       },
 
-      // Data Structures in JavaScript (Intermediate)
       {
         title: 'Stack Implementation',
         description: 'Implement a basic stack with push, pop, and peek operations',
@@ -153,7 +150,6 @@ const seedDatabase = async () => {
         testCases: [{ input: '[1,3,5,7,9,11,13,15], target=7', expected: '3' }]
       },
 
-      // Advanced Python Concepts (Intermediate)
       {
         title: 'Class Inheritance',
         description: 'Create a Vehicle class and a Car subclass with method overriding',
@@ -175,7 +171,6 @@ const seedDatabase = async () => {
         testCases: [{ input: 'decorated function call', expected: 'Done' }]
       },
 
-      // Algorithm Design & Analysis (Advanced)
       {
         title: 'Merge Sort Implementation',
         description: 'Implement the merge sort algorithm',
@@ -197,7 +192,6 @@ const seedDatabase = async () => {
         testCases: [{ input: 'n=10', expected: '55' }]
       },
 
-      // System Design Fundamentals (Advanced)
       {
         title: 'Rate Limiter Design',
         description: 'Implement a simple rate limiter using token bucket algorithm',

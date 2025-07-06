@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const Register: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { isDarkMode } = useTheme();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -41,20 +43,20 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="mx-auto h-16 w-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
             <BookOpen className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             Or{' '}
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
             >
               sign in to your existing account
             </Link>
@@ -65,12 +67,12 @@ const Register: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   First Name
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
                     id="firstName"
@@ -79,19 +81,19 @@ const Register: React.FC = () => {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                     placeholder="First name"
                   />
                 </div>
               </div>
               
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Last Name
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
                     id="lastName"
@@ -100,7 +102,7 @@ const Register: React.FC = () => {
                     required
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                     placeholder="Last name"
                   />
                 </div>
@@ -108,12 +110,12 @@ const Register: React.FC = () => {
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="email"
@@ -123,19 +125,19 @@ const Register: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Password
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="password"
@@ -145,19 +147,19 @@ const Register: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Create a password"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Confirm Password
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                 </div>
                 <input
                   id="confirmPassword"
@@ -167,7 +169,7 @@ const Register: React.FC = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Confirm your password"
                 />
               </div>

@@ -1,108 +1,106 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { User } from '../models/index.js';
+import { AuthService } from '../services/authService.js';
+import { ValidationService } from '../services/validationService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, firstName, lastName } = req.body;
-    
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+    const validationErrors = ValidationService.validateUserRegistration(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validationErrors 
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      email,
-      password: hashedPassword,
-      firstName,
-      lastName
-    });
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-
+    const result = await AuthService.registerUser(req.body);
+    
     res.status(201).json({
       message: 'User created successfully',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName
-      }
+      ...result
     });
   } catch (error) {
+    if (error.message === 'User already exists') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    const validationErrors = ValidationService.validateUserLogin(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validationErrors 
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-
+    const result = await AuthService.loginUser(req.body);
+    
     res.json({
       message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        hasPreferences: !!(user.careerStage && user.level)
-      }
+      ...result
     });
   } catch (error) {
+    if (error.message === 'Invalid credentials') {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+router.post('/change-password', authenticateToken, async (req, res) => {
+  try {
+    const validationErrors = ValidationService.validatePasswordChange(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validationErrors 
+      });
+    }
+
+    const result = await AuthService.changePassword(req.userId, req.body);
+    res.json(result);
+  } catch (error) {
+    if (error.message === 'User not found' || error.message === 'Current password is incorrect') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 router.post('/preferences', authenticateToken, async (req, res) => {
   try {
-    const { careerStage, skills, learningGoals, timeAvailability, level } = req.body;
-    
-    await User.update({
-      careerStage,
-      skills,
-      learningGoals,
-      timeAvailability,
-      level
-    }, { where: { id: req.userId } });
+    const validationErrors = ValidationService.validatePreferences(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validationErrors 
+      });
+    }
 
-    res.json({ message: 'Preferences updated successfully' });
+    const result = await AuthService.updateUserPreferences(req.userId, req.body);
+    res.json(result);
   } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId, {
-      attributes: { exclude: ['password'] }
-    });
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
+    const user = await AuthService.getUserProfile(req.userId);
     res.json({ user });
   } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

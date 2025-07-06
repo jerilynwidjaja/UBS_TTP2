@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
     languageId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 63, 
+      defaultValue: 63, // JavaScript
     },
     expectedOutput: {
       type: DataTypes.TEXT,

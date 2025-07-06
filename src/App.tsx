@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
@@ -13,7 +14,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -27,7 +28,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -38,56 +39,63 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Toaster position="top-right" />
-          <Routes>
-            <Route path="/" element={<Navigate to="/profile" />} />
-            <Route 
-              path="/login" 
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              } 
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                className: 'dark:bg-gray-800 dark:text-white',
+              }}
             />
-            <Route 
-              path="/register" 
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              } 
-            />
-            <Route 
-              path="/profile" 
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/course/:id" 
-              element={
-                <ProtectedRoute>
-                  <CourseDetail />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/question/:id" 
-              element={
-                <ProtectedRoute>
-                  <QuestionView />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+            <Routes>
+              <Route path="/" element={<Navigate to="/profile" />} />
+              <Route 
+                path="/login" 
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/register" 
+                element={
+                  <PublicRoute>
+                    <Register />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/course/:id" 
+                element={
+                  <ProtectedRoute>
+                    <CourseDetail />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/question/:id" 
+                element={
+                  <ProtectedRoute>
+                    <QuestionView />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

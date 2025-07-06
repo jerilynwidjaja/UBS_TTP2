@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { AuthService, UserPreferences } from '../services/authService';
 
 interface UserPreferencesModalProps {
   isOpen: boolean;
@@ -10,10 +11,11 @@ interface UserPreferencesModalProps {
 }
 
 const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
+  const { isDarkMode } = useTheme();
+  const [formData, setFormData] = useState<UserPreferences>({
     careerStage: '',
-    skills: [] as string[],
-    learningGoals: [] as string[],
+    skills: [],
+    learningGoals: [],
     timeAvailability: '',
     level: ''
   });
@@ -34,7 +36,7 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
     setLoading(true);
 
     try {
-      await axios.post('http://52.221.205.14:8000/api/auth/preferences', formData);
+      await AuthService.updatePreferences(formData);
       updateUser({ hasPreferences: true });
       toast.success('Preferences saved successfully!');
       onClose();
@@ -49,12 +51,12 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">Set Up Your Profile</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Set Up Your Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -62,13 +64,13 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Career Stage
             </label>
             <select
               value={formData.careerStage}
               onChange={(e) => setFormData({ ...formData, careerStage: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               required
             >
               <option value="">Select your career stage</option>
@@ -80,7 +82,7 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Current Skills
             </label>
             <div className="space-y-2">
@@ -90,22 +92,22 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
                     type="checkbox"
                     checked={formData.skills.includes(skill)}
                     onChange={() => toggleArrayItem(skill, 'skills')}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{skill}</span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{skill}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Learning Level
             </label>
             <select
               value={formData.level}
               onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               required
             >
               <option value="">Select your level</option>
@@ -116,7 +118,7 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Learning Goals
             </label>
             <div className="space-y-2">
@@ -126,22 +128,22 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
                     type="checkbox"
                     checked={formData.learningGoals.includes(goal)}
                     onChange={() => toggleArrayItem(goal, 'learningGoals')}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{goal}</span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{goal}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Time Availability (per week)
             </label>
             <select
               value={formData.timeAvailability}
               onChange={(e) => setFormData({ ...formData, timeAvailability: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               required
             >
               <option value="">Select time commitment</option>
@@ -156,7 +158,7 @@ const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({ isOpen, onC
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Skip for now
             </button>
