@@ -46,12 +46,12 @@ export class QuestionService {
   };
 
   static async getQuestionById(id: string): Promise<Question> {
-    const response = await axios.get(`http://localhost:8080/api/questions/${id}`);
+    const response = await axios.get(`http://52.221.205.14:8000/api/questions/${id}`);
     return response.data.question;
   }
 
   static async submitCode(questionId: number, code: string): Promise<ExecutionResult> {
-    const response = await axios.post(`http://localhost:8080/api/questions/${questionId}/submit`, {
+    const response = await axios.post(`http://52.221.205.14:8000/api/questions/${questionId}/submit`, {
       code
     });
     return response.data;
