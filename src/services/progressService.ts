@@ -105,22 +105,22 @@ export interface Analytics {
 
 export class ProgressService {
   static async getProgressFeedback(): Promise<ProgressFeedback> {
-    const response = await axios.get('http://52.221.205.14:8080/progress/feedback');
+    const response = await axios.get('http://52.221.205.14:8080/api/progress/feedback');
     return response.data.feedback;
   }
 
   static async getLearningPath(): Promise<LearningPath> {
-    const response = await axios.get('http://52.221.205.14:8080/progress/learning-path');
+    const response = await axios.get('http://52.221.205.14:8080/api/progress/learning-path');
     return response.data.learningPath;
   }
 
   static async getSequentialPath(): Promise<SequentialPath> {
-    const response = await axios.get('http://52.221.205.14:8080/progress/sequential-path');
+    const response = await axios.get('http://52.221.205.14:8080/api/progress/sequential-path');
     return response.data.sequentialPath;
   }
 
   static async getAnalytics(): Promise<Analytics> {
-    const response = await axios.get('http://52.221.205.14:8080/progress/analytics');
+    const response = await axios.get('http://52.221.205.14:8080/api/progress/analytics');
     return response.data.analytics;
   }
 

@@ -19,12 +19,12 @@ export class QuestionService {
   };
 
   static async getQuestionById(id) {
-    const response = await axios.get(`http://52.221.205.14:8080/questions/${id}`);
+    const response = await axios.get(`http://52.221.205.14:8080/api/questions/${id}`);
     return response.data.question;
   }
 
   static async submitCode(questionId, code) {
-    const response = await axios.post(`http://52.221.205.14:8080/questions/${questionId}/submit`, {
+    const response = await axios.post(`http://52.221.205.14:8080/api/questions/${questionId}/submit`, {
       code
     });
     return response.data;
