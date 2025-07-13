@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --ignore 'database.sqlite*' server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:seed": "node seedData.js",
+    "db:reset": "rm -f database.sqlite && npm run db:seed"
   },
   "dependencies": {
     "express": "^4.18.2",

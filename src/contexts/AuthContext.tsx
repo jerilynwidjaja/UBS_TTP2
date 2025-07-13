@@ -8,6 +8,11 @@ interface User {
   firstName?: string;
   lastName?: string;
   hasPreferences?: boolean;
+  careerStage?: string;
+  skills?: string[];
+  learningGoals?: string[];
+  timeAvailability?: string;
+  level?: string;
 }
 
 interface AuthContextType {
@@ -17,6 +22,7 @@ interface AuthContextType {
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,12 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async () => {
     try {
       const userData = await AuthService.getUserProfile();
-      setUser(userData);
+      // Ensure hasPreferences is properly set based on user data
+      const hasPreferences = !!(userData.careerStage && userData.level && 
+        userData.skills?.length > 0 && userData.learningGoals?.length > 0);
+      
+      setUser({
+        ...userData,
+        hasPreferences
+      });
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       AuthService.removeAuthToken();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshUserProfile = async () => {
+    if (user) {
+      await fetchUserProfile();
     }
   };
 
@@ -53,7 +72,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { token, user: userData } = response;
       
       AuthService.setAuthToken(token);
-      setUser(userData);
+      
+      // Properly check for preferences
+      const hasPreferences = !!(userData.careerStage && userData.level && 
+        userData.skills?.length > 0 && userData.learningGoals?.length > 0);
+      
+      setUser({
+        ...userData,
+        hasPreferences
+      });
       toast.success('Login successful!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Login failed');
@@ -67,7 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { token, user: userData } = response;
       
       AuthService.setAuthToken(token);
-      setUser(userData);
+      setUser({
+        ...userData,
+        hasPreferences: false // New users don't have preferences
+      });
       toast.success('Registration successful!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed');
@@ -82,7 +112,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUser = (userData: Partial<User>) => {
-    setUser(prev => prev ? { ...prev, ...userData } : null);
+    setUser(prev => {
+      if (!prev) return null;
+      
+      const updatedUser = { ...prev, ...userData };
+      
+      // Recalculate hasPreferences when user data is updated
+      if (userData.careerStage || userData.level || userData.skills || userData.learningGoals) {
+        updatedUser.hasPreferences = !!(updatedUser.careerStage && updatedUser.level && 
+          updatedUser.skills?.length > 0 && updatedUser.learningGoals?.length > 0);
+      }
+      
+      return updatedUser;
+    });
   };
 
   return (
@@ -92,7 +134,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
-      updateUser
+      updateUser,
+      refreshUserProfile
     }}>
       {children}
     </AuthContext.Provider>

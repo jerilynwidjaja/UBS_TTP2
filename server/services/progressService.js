@@ -1,4 +1,4 @@
-import { User, UserProgress, Course, Question } from '../models/index.js';
+import { User, Course, Question, UserProgress } from '../models/index.js';
 import { AIRecommendationService } from './aiRecommendationService.js';
 
 export class ProgressService {
@@ -8,22 +8,22 @@ export class ProgressService {
       throw new Error('User not found');
     }
 
-    // Get recommended courses first
-    const allCourses = await Course.findAll({
-      include: [{ model: Question, as: 'questions' }]
-    });
+    // Get recommended courses for this user
+    const recommendedCoursesResult = await AIRecommendationService.generateRecommendations(
+      user,
+      await Course.findAll({ include: [{ model: Question, as: 'questions' }] }),
+      await UserProgress.findAll({ where: { userId } })
+    );
 
-    const userProgress = await UserProgress.findAll({
-      where: { userId }
-    });
+    const recommendedCourses = recommendedCoursesResult.recommendations;
+    const userProgress = await UserProgress.findAll({ where: { userId } });
 
-    // Get AI recommendations to focus feedback on recommended courses
-    const recommendationResult = await AIRecommendationService.generateRecommendations(user, allCourses, userProgress);
-    const recommendedCourses = recommendationResult.recommendations;
-
-    const feedback = await AIRecommendationService.generateProgressFeedback(user, userProgress, allCourses, recommendedCourses);
-
-    return feedback;
+    return await AIRecommendationService.generateProgressFeedback(
+      user,
+      userProgress,
+      await Course.findAll({ include: [{ model: Question, as: 'questions' }] }),
+      recommendedCourses
+    );
   }
 
   static async getLearningPath(userId) {
@@ -32,21 +32,21 @@ export class ProgressService {
       throw new Error('User not found');
     }
 
-    const userProgress = await UserProgress.findAll({
-      where: { userId }
-    });
+    // Get recommended courses for this user
+    const recommendedCoursesResult = await AIRecommendationService.generateRecommendations(
+      user,
+      await Course.findAll({ include: [{ model: Question, as: 'questions' }] }),
+      await UserProgress.findAll({ where: { userId } })
+    );
 
-    const allCourses = await Course.findAll({
-      include: [{ model: Question, as: 'questions' }]
-    });
+    const recommendedCourses = recommendedCoursesResult.recommendations;
+    const userProgress = await UserProgress.findAll({ where: { userId } });
 
-    // Get recommended courses for learning path
-    const recommendationResult = await AIRecommendationService.generateRecommendations(user, allCourses, userProgress);
-    const recommendedCourses = recommendationResult.recommendations;
-
-    const learningPath = await AIRecommendationService.generateLearningPath(user, recommendedCourses, userProgress);
-
-    return learningPath;
+    return await AIRecommendationService.generateLearningPath(
+      user,
+      recommendedCourses,
+      userProgress
+    );
   }
 
   static async getSequentialPath(userId) {
@@ -55,131 +55,144 @@ export class ProgressService {
       throw new Error('User not found');
     }
 
-    const userProgress = await UserProgress.findAll({
-      where: { userId }
-    });
+    // Get recommended courses for this user
+    const recommendedCoursesResult = await AIRecommendationService.generateRecommendations(
+      user,
+      await Course.findAll({ include: [{ model: Question, as: 'questions' }] }),
+      await UserProgress.findAll({ where: { userId } })
+    );
 
-    const allCourses = await Course.findAll({
-      include: [{ model: Question, as: 'questions' }]
-    });
+    const recommendedCourses = recommendedCoursesResult.recommendations;
+    const userProgress = await UserProgress.findAll({ where: { userId } });
 
-    // Get recommended courses for sequential path
-    const recommendationResult = await AIRecommendationService.generateRecommendations(user, allCourses, userProgress);
-    const recommendedCourses = recommendationResult.recommendations;
-
-    const sequentialPath = await AIRecommendationService.generateSequentialLearningPath(user, recommendedCourses, userProgress);
-
-    return sequentialPath;
+    return await AIRecommendationService.generateSequentialLearningPath(
+      user,
+      recommendedCourses,
+      userProgress
+    );
   }
 
   static async getAnalytics(userId) {
-    const user = await User.findByPk(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
     const userProgress = await UserProgress.findAll({
       where: { userId },
       include: [
-        { model: Course, as: 'course' },
-        { model: Question, as: 'question' }
-      ],
-      order: [['updatedAt', 'DESC']]
+        {
+          model: Question,
+          as: 'question',
+          include: [{
+            model: Course,
+            as: 'course'
+          }]
+        }
+      ]
     });
 
-    const allCourses = await Course.findAll({
-      include: [{ model: Question, as: 'questions' }]
-    });
+    // Get recommended courses for this user to filter analytics
+    const user = await User.findByPk(userId);
+    const recommendedCoursesResult = await AIRecommendationService.generateRecommendations(
+      user,
+      await Course.findAll({ include: [{ model: Question, as: 'questions' }] }),
+      userProgress
+    );
 
-    // Get recommended courses for analytics
-    const recommendationResult = await AIRecommendationService.generateRecommendations(user, allCourses, userProgress);
-    const recommendedCourses = recommendationResult.recommendations;
+    const recommendedCourseIds = recommendedCoursesResult.recommendations.map(c => c.id);
 
     // Filter progress to only include recommended courses
-    const recommendedCourseIds = recommendedCourses.map(c => c.id);
-    const filteredProgress = userProgress.filter(p => recommendedCourseIds.includes(p.courseId));
+    const filteredProgress = userProgress.filter(p => 
+      recommendedCourseIds.includes(p.courseId)
+    );
 
-    const analytics = {
-      totalQuestions: 0,
-      completedQuestions: 0,
-      totalAttempts: 0,
-      averageAttempts: 0,
-      completionRate: 0,
-      categoryBreakdown: {},
-      difficultyBreakdown: {},
-      recentActivity: [],
-      learningStreak: 0,
-      timeSpent: 0
+    const totalQuestions = filteredProgress.length;
+    const completedQuestions = filteredProgress.filter(p => p.completed).length;
+    const totalAttempts = filteredProgress.reduce((sum, p) => sum + p.attempts, 0);
+    const averageAttempts = completedQuestions > 0 ? totalAttempts / completedQuestions : 0;
+    const completionRate = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
+
+    // Category breakdown (recommended courses only)
+    const categoryBreakdown = {};
+    filteredProgress.forEach(p => {
+      const category = p.question?.course?.category || 'Unknown';
+      if (!categoryBreakdown[category]) {
+        categoryBreakdown[category] = { completed: 0, total: 0 };
+      }
+      categoryBreakdown[category].total++;
+      if (p.completed) {
+        categoryBreakdown[category].completed++;
+      }
+    });
+
+    // Difficulty breakdown (recommended courses only)
+    const difficultyBreakdown = {};
+    filteredProgress.forEach(p => {
+      const difficulty = p.question?.difficulty || 'unknown';
+      if (!difficultyBreakdown[difficulty]) {
+        difficultyBreakdown[difficulty] = { completed: 0, total: 0 };
+      }
+      difficultyBreakdown[difficulty].total++;
+      if (p.completed) {
+        difficultyBreakdown[difficulty].completed++;
+      }
+    });
+
+    // Recent activity (last 7 days, recommended courses only)
+    const recentActivity = filteredProgress
+      .filter(p => p.lastAttemptAt && 
+        new Date(p.lastAttemptAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+      .map(p => ({
+        questionTitle: p.question?.title || 'Unknown Question',
+        courseTitle: p.question?.course?.title || 'Unknown Course',
+        completed: p.completed,
+        attempts: p.attempts,
+        date: p.lastAttemptAt
+      }))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Learning streak (consecutive days with activity, recommended courses only)
+    const learningStreak = this.calculateLearningStreak(filteredProgress);
+
+    return {
+      totalQuestions,
+      completedQuestions,
+      totalAttempts,
+      averageAttempts: Math.round(averageAttempts * 10) / 10,
+      completionRate,
+      categoryBreakdown,
+      difficultyBreakdown,
+      recentActivity,
+      learningStreak
     };
+  }
 
-    filteredProgress.forEach(progress => {
-      analytics.totalAttempts += progress.attempts;
-      if (progress.completed) {
-        analytics.completedQuestions++;
-      }
-
-      const category = progress.course?.category || 'Unknown';
-      if (!analytics.categoryBreakdown[category]) {
-        analytics.categoryBreakdown[category] = { completed: 0, total: 0 };
-      }
-      analytics.categoryBreakdown[category].total++;
-      if (progress.completed) {
-        analytics.categoryBreakdown[category].completed++;
-      }
-
-      const difficulty = progress.question?.difficulty || 'Unknown';
-      if (!analytics.difficultyBreakdown[difficulty]) {
-        analytics.difficultyBreakdown[difficulty] = { completed: 0, total: 0 };
-      }
-      analytics.difficultyBreakdown[difficulty].total++;
-      if (progress.completed) {
-        analytics.difficultyBreakdown[difficulty].completed++;
-      }
-
-      if (progress.lastAttemptAt && 
-          new Date(progress.lastAttemptAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
-        analytics.recentActivity.push({
-          questionTitle: progress.question?.title,
-          courseTitle: progress.course?.title,
-          completed: progress.completed,
-          attempts: progress.attempts,
-          date: progress.lastAttemptAt
-        });
-      }
-    });
-
-    // Calculate total questions from recommended courses only
-    recommendedCourses.forEach(course => {
-      analytics.totalQuestions += course.questions?.length || 0;
-    });
-
-    analytics.completionRate = analytics.totalQuestions > 0 ? 
-      Math.round((analytics.completedQuestions / analytics.totalQuestions) * 100) : 0;
-    analytics.averageAttempts = analytics.completedQuestions > 0 ? 
-      Math.round((analytics.totalAttempts / analytics.completedQuestions) * 10) / 10 : 0;
-
-    const sortedActivity = filteredProgress
+  static calculateLearningStreak(userProgress) {
+    const activityDates = userProgress
       .filter(p => p.lastAttemptAt)
-      .sort((a, b) => new Date(b.lastAttemptAt) - new Date(a.lastAttemptAt));
+      .map(p => new Date(p.lastAttemptAt).toDateString())
+      .filter((date, index, array) => array.indexOf(date) === index)
+      .sort((a, b) => new Date(b) - new Date(a));
 
-    let streak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
+    if (activityDates.length === 0) return 0;
 
-    for (let i = 0; i < sortedActivity.length; i++) {
-      const activityDate = new Date(sortedActivity[i].lastAttemptAt);
-      activityDate.setHours(0, 0, 0, 0);
-      
-      const daysDiff = Math.floor((currentDate - activityDate) / (1000 * 60 * 60 * 24));
-      
-      if (daysDiff === streak) {
+    let streak = 1;
+    const today = new Date().toDateString();
+    
+    // Check if there's activity today or yesterday
+    if (activityDates[0] !== today && 
+        activityDates[0] !== new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString()) {
+      return 0;
+    }
+
+    for (let i = 1; i < activityDates.length; i++) {
+      const currentDate = new Date(activityDates[i]);
+      const previousDate = new Date(activityDates[i - 1]);
+      const dayDifference = (previousDate - currentDate) / (24 * 60 * 60 * 1000);
+
+      if (dayDifference === 1) {
         streak++;
-      } else if (daysDiff > streak) {
+      } else {
         break;
       }
     }
-    analytics.learningStreak = streak;
 
-    return analytics;
+    return streak;
   }
 }

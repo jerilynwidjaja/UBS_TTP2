@@ -1,82 +1,137 @@
-import { Course, Question, User, UserProgress } from '../models/index.js';
+import { Course, Question, UserProgress, User } from '../models/index.js';
 import { AIRecommendationService } from './aiRecommendationService.js';
 import { DatabaseService } from './databaseService.js';
 
 export class CourseService {
   static async getAllCoursesWithProgress(userId) {
-    const courses = await DatabaseService.findAllCourses(true);
-
-    const userProgress = await DatabaseService.findUserProgress(userId);
-
-    const coursesWithProgress = courses.map(course => {
-      const courseProgress = userProgress.filter(p => p.courseId === course.id);
-      const totalQuestions = course.questions.length;
-      const completedQuestions = courseProgress.filter(p => p.completed).length;
-      const progressPercentage = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
-
-      return {
-        ...course.toJSON(),
-        progress: {
-          completed: completedQuestions,
-          total: totalQuestions,
-          percentage: progressPercentage
-        }
-      };
+    const courses = await Course.findAll({
+      include: [{
+        model: Question,
+        as: 'questions'
+      }]
     });
+
+    const coursesWithProgress = await Promise.all(
+      courses.map(async (course) => {
+        const progress = await this.calculateCourseProgress(course.id, userId);
+        return {
+          ...course.toJSON(),
+          progress
+        };
+      })
+    );
 
     return coursesWithProgress;
   }
 
-  static async getRecommendedCourses(userId) {
-    const user = await DatabaseService.findUserById(userId);
-    if (!user) {
-      throw new Error('User not found');
+  static async getRecommendedCourses(userId, forceRefresh = false) {
+    try {
+      // Get user and all courses
+      const user = await User.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const allCourses = await Course.findAll({
+        include: [{
+          model: Question,
+          as: 'questions'
+        }]
+      });
+
+      const userProgress = await UserProgress.findAll({
+        where: { userId }
+      });
+
+      // Get AI recommendations
+      const result = await AIRecommendationService.generateRecommendations(
+        user, 
+        allCourses, 
+        userProgress,
+        forceRefresh
+      );
+
+      // Add progress to recommended courses
+      const coursesWithProgress = await Promise.all(
+        result.recommendations.map(async (course) => {
+          const progress = await this.calculateCourseProgress(course.id, userId);
+          return {
+            ...course,
+            progress
+          };
+        })
+      );
+
+      return {
+        courses: coursesWithProgress,
+        metadata: result.metadata,
+        aiResponse: result.aiResponse,
+        rawAiResponse: result.rawAiResponse
+      };
+
+    } catch (error) {
+      console.error('Course recommendation error:', error);
+      throw error;
     }
-
-    const allCourses = await DatabaseService.findAllCourses(true);
-
-    const userProgress = await DatabaseService.findUserProgress(userId);
-
-    const result = await AIRecommendationService.generateRecommendations(user, allCourses, userProgress);
-
-    return {
-      courses: result.recommendations,
-      strategy: result.strategy,
-      metadata: result.metadata
-    };
   }
 
   static async getCourseByIdWithProgress(courseId, userId) {
-    const course = await DatabaseService.findCourseById(courseId, true);
+    const course = await Course.findByPk(courseId, {
+      include: [{
+        model: Question,
+        as: 'questions'
+      }]
+    });
 
     if (!course) {
       throw new Error('Course not found');
     }
 
-    const userProgress = await DatabaseService.getUserProgressForCourse(userId, course.id);
+    const progress = await this.calculateCourseProgress(courseId, userId);
+    
+    // Add progress to each question
+    const questionsWithProgress = await Promise.all(
+      course.questions.map(async (question) => {
+        const questionProgress = await UserProgress.findOne({
+          where: { userId, questionId: question.id }
+        });
 
-    const questionsWithProgress = course.questions.map(question => {
-      const questionProgress = userProgress.find(p => p.questionId === question.id);
-      return {
-        ...question.toJSON(),
-        completed: questionProgress?.completed || false,
-        attempts: questionProgress?.attempts || 0,
-        lastAttemptAt: questionProgress?.lastAttemptAt || null
-      };
-    });
-
-    const totalQuestions = course.questions.length;
-    const completedQuestions = userProgress.filter(p => p.completed).length;
-    const progressPercentage = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
+        return {
+          ...question.toJSON(),
+          completed: questionProgress?.completed || false,
+          attempts: questionProgress?.attempts || 0,
+          lastAttemptAt: questionProgress?.lastAttemptAt
+        };
+      })
+    );
 
     return {
       ...course.toJSON(),
       questions: questionsWithProgress,
-      progress: {
-        completed: completedQuestions,
-        total: totalQuestions,
-        percentage: progressPercentage
+      progress
+    };
+  }
+
+  static async calculateCourseProgress(courseId, userId) {
+    const totalQuestions = await Question.count({
+      where: { courseId }
+    });
+
+    const completedQuestions = await UserProgress.count({
+      where: { 
+        userId, 
+        courseId,
+        completed: true 
       }
+    });
+
+    const percentage = totalQuestions > 0 ? 
+      Math.round((completedQuestions / totalQuestions) * 100) : 0;
+
+    return {
+      completed: completedQuestions,
+      total: totalQuestions,
+      percentage
     };
   }
 }

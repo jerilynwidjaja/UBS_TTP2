@@ -5,8 +5,10 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Register
 router.post('/register', async (req, res) => {
   try {
+    // Validate input
     const validationErrors = ValidationService.validateUserRegistration(req.body);
     if (validationErrors.length > 0) {
       return res.status(400).json({ 
@@ -29,8 +31,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Login
 router.post('/login', async (req, res) => {
   try {
+    // Validate input
     const validationErrors = ValidationService.validateUserLogin(req.body);
     if (validationErrors.length > 0) {
       return res.status(400).json({ 
@@ -53,8 +57,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Change password
 router.post('/change-password', authenticateToken, async (req, res) => {
   try {
+    // Validate input
     const validationErrors = ValidationService.validatePasswordChange(req.body);
     if (validationErrors.length > 0) {
       return res.status(400).json({ 
@@ -73,8 +79,10 @@ router.post('/change-password', authenticateToken, async (req, res) => {
   }
 });
 
+// Update user preferences
 router.post('/preferences', authenticateToken, async (req, res) => {
   try {
+    // Validate input
     const validationErrors = ValidationService.validatePreferences(req.body);
     if (validationErrors.length > 0) {
       return res.status(400).json({ 
@@ -93,6 +101,7 @@ router.post('/preferences', authenticateToken, async (req, res) => {
   }
 });
 
+// Get user profile
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const user = await AuthService.getUserProfile(req.userId);

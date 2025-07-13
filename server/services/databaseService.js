@@ -1,102 +1,139 @@
-import { User, Course, Question, UserProgress } from '../models/index.js';
+import { sequelize } from '../models/index.js';
 
 export class DatabaseService {
-  static async findUserById(userId) {
-    return await User.findByPk(userId);
+  static async findUserById(id) {
+    const { User } = await import('../models/index.js');
+    return await User.findByPk(id);
   }
 
   static async findUserByEmail(email) {
+    const { User } = await import('../models/index.js');
     return await User.findOne({ where: { email } });
   }
 
   static async createUser(userData) {
+    const { User } = await import('../models/index.js');
     return await User.create(userData);
   }
 
-  static async updateUser(userId, updateData) {
-    const [updatedRowsCount] = await User.update(updateData, { 
-      where: { id: userId } 
-    });
-    return updatedRowsCount > 0;
+  static async updateUser(id, updateData) {
+    const { User } = await import('../models/index.js');
+    const user = await User.findByPk(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return await user.update(updateData);
   }
 
-  static async findAllCourses(includeQuestions = false) {
-    const includeOptions = includeQuestions ? [
-      {
-        model: Question,
-        as: 'questions',
-        attributes: ['id', 'title', 'difficulty']
-      }
-    ] : [];
-
+  static async findAllCourses() {
+    const { Course, Question } = await import('../models/index.js');
     return await Course.findAll({
-      include: includeOptions
-    });
-  }
-
-  static async findCourseById(courseId, includeQuestions = false) {
-    const includeOptions = includeQuestions ? [
-      {
+      include: [{
         model: Question,
         as: 'questions'
-      }
-    ] : [];
-
-    return await Course.findByPk(courseId, {
-      include: includeOptions
+      }]
     });
   }
 
-  static async findQuestionById(questionId) {
-    return await Question.findByPk(questionId);
+  static async findCourseById(id) {
+    const { Course, Question } = await import('../models/index.js');
+    return await Course.findByPk(id, {
+      include: [{
+        model: Question,
+        as: 'questions'
+      }]
+    });
+  }
+
+  static async findQuestionById(id) {
+    const { Question, Course } = await import('../models/index.js');
+    return await Question.findByPk(id, {
+      include: [{
+        model: Course,
+        as: 'course'
+      }]
+    });
   }
 
   static async findUserProgress(userId, filters = {}) {
+    const { UserProgress, Question, Course } = await import('../models/index.js');
     const whereClause = { userId, ...filters };
     
     return await UserProgress.findAll({
       where: whereClause,
       include: [
-        { model: Course, as: 'course' },
-        { model: Question, as: 'question' }
-      ],
-      order: [['updatedAt', 'DESC']]
+        {
+          model: Question,
+          as: 'question',
+          include: [{
+            model: Course,
+            as: 'course'
+          }]
+        }
+      ]
     });
   }
 
-  static async findOrCreateUserProgress(userId, questionId, courseId) {
-    return await UserProgress.findOrCreate({
-      where: { 
-        userId,
-        questionId
-      },
+  static async createOrUpdateProgress(userId, questionId, courseId, updateData) {
+    const { UserProgress } = await import('../models/index.js');
+    
+    const [progress, created] = await UserProgress.findOrCreate({
+      where: { userId, questionId, courseId },
       defaults: {
-        userId,
-        courseId,
-        questionId,
-        attempts: 0,
-        completed: false
+        ...updateData,
+        attempts: 1,
+        lastAttemptAt: new Date()
       }
     });
-  }
 
-  static async updateUserProgress(progressId, updateData) {
-    const progress = await UserProgress.findByPk(progressId);
-    if (progress) {
-      return await progress.update(updateData);
+    if (!created) {
+      await progress.update({
+        ...updateData,
+        attempts: progress.attempts + 1,
+        lastAttemptAt: new Date()
+      });
     }
-    return null;
+
+    return progress;
   }
 
-  static async getUserProgressForCourse(userId, courseId) {
-    return await UserProgress.findAll({
-      where: { userId, courseId }
+  static async getProgressStats(userId, courseId = null) {
+    const { UserProgress } = await import('../models/index.js');
+    const whereClause = { userId };
+    if (courseId) {
+      whereClause.courseId = courseId;
+    }
+
+    const totalQuestions = await UserProgress.count({ where: whereClause });
+    const completedQuestions = await UserProgress.count({ 
+      where: { ...whereClause, completed: true } 
     });
+
+    return {
+      total: totalQuestions,
+      completed: completedQuestions,
+      percentage: totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0
+    };
   }
 
-  static async getUserProgressForQuestion(userId, questionId) {
-    return await UserProgress.findOne({
-      where: { userId, questionId }
-    });
+  static async transaction(callback) {
+    const transaction = await sequelize.transaction();
+    try {
+      const result = await callback(transaction);
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  static async healthCheck() {
+    try {
+      await sequelize.authenticate();
+      return { status: 'healthy', database: 'connected' };
+    } catch (error) {
+      return { status: 'unhealthy', database: 'disconnected', error: error.message };
+    }
   }
 }

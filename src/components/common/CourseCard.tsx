@@ -200,7 +200,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
             </div>
             
             <div className="flex items-center text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-              <span className="text-sm mr-1">{course.questions.length} questions</span>
+              <span className="text-sm mr-1">{course.questions?.length} questions</span>
               <ChevronRight className="h-4 w-4" />
             </div>
           </div>

@@ -4,6 +4,7 @@ import CourseModel from './Course.js';
 import QuestionModel from './Question.js';
 import UserProgressModel from './UserProgress.js';
 
+// Simple SQLite configuration for development
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: './database.sqlite',
