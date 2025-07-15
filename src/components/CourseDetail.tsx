@@ -274,88 +274,87 @@ const CourseDetail: React.FC = () => {
               </div>
             )}
 
-            {/* Coding Challenges Section */}
-            {activeSection === 'questions' && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-                  <Code2 className="h-6 w-6 mr-2 text-blue-600" />
-                  Coding Challenges
-                </h2>
-                
-                <div className="space-y-4">
-                  {course.questions.map((question, index) => (
-                    <div
-                      key={question.id}
-                      onClick={() => navigate(`/question/${question.id}`)}
-                      className={`flex items-center justify-between p-6 border rounded-xl transition-all duration-200 cursor-pointer group ${
-                        question.completed 
-                          ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30' 
-                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm mr-4 ${
-                          question.completed 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                        }`}>
-                          {question.completed ? (
-                            <CheckCircle2 className="h-5 w-5" />
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-                        
-                        <div>
-                          <h3 className={`text-lg font-semibold transition-colors ${
-                            question.completed 
-                              ? 'text-green-800 dark:text-green-300' 
-                              : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                          }`}>
-                            {question.title}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-300 text-sm">{question.description}</p>
-                          {question.attempts && question.attempts > 0 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {question.attempts} attempt{question.attempts > 1 ? 's' : ''}
-                              {question.lastAttemptAt && (
-                                <span> • Last attempt: {new Date(question.lastAttemptAt).toLocaleDateString()}</span>
-                              )}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${QuestionService.getDifficultyColor(question.difficulty)}`}>
-                          {question.difficulty}
-                        </span>
-                        
-                        <div className={`flex items-center transition-colors ${
-                          question.completed 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300'
-                        }`}>
-                          {question.completed ? (
-                            <CheckCircle2 className="h-5 w-5" />
-                          ) : (
-                            <Play className="h-5 w-5" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {course.questions.length === 0 && (
-                  <div className="text-center py-12">
-                    <BarChart3 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No questions yet</h3>
-                    <p className="text-gray-600 dark:text-gray-300">Questions for this course are coming soon!</p>
-                  </div>
+           {/* Coding Challenges Section */}
+{/* Coding Challenges Section */}
+{activeSection === 'questions' && (
+  <div>
+    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+      <Code2 className="h-6 w-6 mr-2 text-blue-600" />
+      Coding Challenges
+    </h2>
+    
+    <div className="space-y-4">
+      {course.questions.map((question, index) => (
+        <div
+          key={question.id}
+          onClick={() => navigate(`/question/${question.id}`)}
+          className={`flex items-center justify-between p-6 border rounded-xl transition-all duration-200 cursor-pointer group ${
+            question.completed 
+              ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30' 
+              : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+          }`}
+        >
+          <div className="flex items-center">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm mr-4 ${
+              question.completed 
+                ? 'bg-green-500 text-white' 
+                : 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+            }`}>
+              {question.completed ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                index + 1
+              )}
+            </div>
+            
+            <div>
+              <h3 className={`text-lg font-semibold transition-colors ${
+                question.completed 
+                  ? 'text-green-800 dark:text-green-300' 
+                  : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+              }`}>
+                {question.title}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{question.description}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {(question.attempts || 0)} attempt{(question.attempts || 0) !== 1 ? 's' : ''}
+                {question.attempts > 0 && question.lastAttemptAt && (
+                  <span> • Last attempt: {new Date(question.lastAttemptAt).toLocaleDateString()}</span>
                 )}
-              </div>
-            )}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${QuestionService.getDifficultyColor(question.difficulty)}`}>
+              {question.difficulty}
+            </span>
+            
+            <div className={`flex items-center transition-colors ${
+              question.completed 
+                ? 'text-green-600 dark:text-green-400' 
+                : 'text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300'
+            }`}>
+              {question.completed ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    {course.questions.length === 0 && (
+      <div className="text-center py-12">
+        <BarChart3 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No questions yet</h3>
+        <p className="text-gray-600 dark:text-gray-300">Questions for this course are coming soon!</p>
+      </div>
+    )}
+  </div>
+)}
           </div>
         </div>
       </main>

@@ -36,27 +36,64 @@ const Profile: React.FC = () => {
     fetchCourses();
   }, [user]);
 
-  const fetchCourses = async () => {
+  // Helper function to retry API calls
+const retryApiCall = async (apiCall, maxRetries = 2, delay = 1000) => {
+  for (let i = 0; i <= maxRetries; i++) {
     try {
-      setAiComputing(true);
-      
-      const [coursesData, recommendedData] = await Promise.all([
-        CourseService.getAllCourses(),
-        CourseService.getRecommendedCourses()
-      ]);
-      
+      return await apiCall();
+    } catch (error) {
+      if (i === maxRetries) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+    }
+  }
+};
+
+const fetchCourses = async () => {
+  setLoading(true);
+  setAiComputing(true);
+  
+  // Load courses and recommendations independently
+  const loadAllCourses = async () => {
+    try {
+      const coursesData = await retryApiCall(() => CourseService.getAllCourses());
       setCourses(coursesData);
+      return true;
+    } catch (error) {
+      console.error('Failed to load all courses after retries:', error);
+      toast.error('Some courses may not be available');
+      setCourses([]); // Set empty array as fallback
+      return false;
+    }
+  };
+
+  const loadRecommendations = async () => {
+    try {
+      const recommendedData = await retryApiCall(() => CourseService.getRecommendedCourses());
       setRecommendedCourses(recommendedData.courses);
       setRecommendationMetadata(recommendedData.metadata || null);
       setAiResponse(recommendedData.aiResponse || null);
       setRawAiResponse(recommendedData.rawAiResponse || '');
+      return true;
     } catch (error) {
-      toast.error('Failed to load courses');
-    } finally {
-      setLoading(false);
-      setAiComputing(false);
+      setRecommendedCourses([]);
+      setRecommendationMetadata(null);
+      setAiResponse(null);
+      setRawAiResponse('');
+      return false;
     }
   };
+
+  // Load both concurrently but handle failures independently
+  const [coursesSuccess, recommendationsSuccess] = await Promise.all([
+    loadAllCourses(),
+    loadRecommendations()
+  ]);
+
+  setLoading(false);
+  setAiComputing(false);
+};
+
+
 
   const handleShowRecommendationDetails = (courseId: number) => {
     setShowRecommendationDetails(
