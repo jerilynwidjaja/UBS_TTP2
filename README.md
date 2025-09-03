@@ -3,7 +3,7 @@
 A comprehensive e-learning platform with AI-powered course recommendations, personalized learning paths, and intelligent progress feedback. Built with modern web technologies and OpenAI integration.
 
 ## 🚀 Demo & Presentation
-[![Watch the video](https://img.youtube.com/vi/Fi8FeXQj6ag/maxresdefault.jpg)](https://youtu.be/Fi8FeXQj6ag)
+[![Watch the video](https://img.youtube.com/vi/Fi8FeXQj6ag/maxresdefault.jpg)](https://youtu.be/Fi8FeXQj6ag?si=JCQgeJI2nB2yqdpY&t=285)
 
 ## 🚀 Features
 
